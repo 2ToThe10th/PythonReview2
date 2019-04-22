@@ -5,3 +5,5 @@ SSL_CERT = "cert.pem"
 SSL_KEY = "key.pem"
 
 tg_bot = telegram.Telegram(SSL_CERT, TOKEN)
+
+tg_bot.send_message(391332114, "Hello u too))")
