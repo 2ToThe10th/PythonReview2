@@ -10,4 +10,4 @@ class Telegram:
 
     def send_message(self, chat_id, message):
         requests.post(self.__URL + "sendMessage",
-                      data={'chat_id': str(chat_id), 'message': str(message)})
+                      data={'chat_id': str(chat_id), 'text': str(message)})
