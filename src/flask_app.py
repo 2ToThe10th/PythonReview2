@@ -2,7 +2,7 @@ from flask import *
 
 
 class FlaskApp:
-    def __init__(self, TOKEN, HOST, PORT, SSL_CERT, SSL_KEY):
+    def __init__(self, TOKEN, PORT, SSL_CERT, SSL_KEY):
         app = Flask(__name__)
 
         @app.route('/tgbot/' + TOKEN + '/', methods=['POST'])
@@ -14,4 +14,4 @@ class FlaskApp:
         def index():
             return "Hello"
 
-        app.run(host=str(HOST), port=int(PORT), ssl_context=(SSL_CERT, SSL_KEY))
+        app.run(host="0.0.0.0", port=int(PORT), ssl_context=(SSL_CERT, SSL_KEY))
