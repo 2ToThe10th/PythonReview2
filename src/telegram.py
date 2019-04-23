@@ -24,3 +24,10 @@ class Telegram:
                                    data={'chat_id': str(chat_id), 'text': str(message)})
             if answer.ok:
                 break
+
+    def __del__(self):
+        for i in range(MAX_TIME_TO_REPEAT):
+            answer = requests.post(self.__URL + "setWebhook")
+
+            if answer.ok:
+                break
