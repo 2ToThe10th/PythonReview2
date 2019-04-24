@@ -16,7 +16,7 @@ class FlaskApp:
 
             if text == '/start':
                 tg_bot.send_message(chat_id=chat_id, message="Hello. If you want to sign up write /reg and then " +
-                                                             "your login and your timezone. For example:\n/reg Sasha +3")
+                                                             "your login and your timezone. For example:\n/reg Aleksandr Creator +3")
             elif len(text) >= 4 and text[:4] == '/reg':
                 row_data = text[4:].split(' ')
                 data = []
