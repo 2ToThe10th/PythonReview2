@@ -35,12 +35,13 @@ class FlaskApp:
                     
                     try:
                         gmt = int(data[-1])
+                        if gmt < -12 or gmt > 14:
+                            raise ValueError('Incorrect gmt') 
                     except:
-                        tg_bot.send_message(chat_id=chat_id, message="timezone might be a number")
+                        tg_bot.send_message(chat_id=chat_id, message="timezone might be a number between -12 and 14")
                         return ('', 204)
                                        
                     db.cursor.execute("Select * from CLIENT where login = %s", (login,))
-                    print(db.cursor.rowcount)
                     if db.cursor.rowcount:
                         tg_bot.send_message(chat_id=chat_id, message="Login is already used. Please, choose other")
                     else:
