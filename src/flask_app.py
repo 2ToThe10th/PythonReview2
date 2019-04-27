@@ -5,7 +5,7 @@ import secrets
 import string
 
 class FlaskApp:
-    def __init__(self, TOKEN, HOST, PORT, SSL_CERT, SSL_KEY, db, tg_bot):
+    def __init__(self, TOKEN, HOST, PORT, SSL_CERT, SSL_KEY, SECRET_KEY, db, tg_bot):
         app = Flask(__name__)
 
         @app.route('/tgbot/' + TOKEN, methods=['POST'])
@@ -57,10 +57,10 @@ class FlaskApp:
                             tg_bot.send_message(chat_id=chat_id, message="You are already sign up from this telegram account. Please, choose other or use your already registered account")
                         else:
                             password = ''.join(secrets.choice(string.ascii_lowercase + string.ascii_uppercase + string.digits) for i in range(10))
-                            passwdsha512 = hashlib.sha512(password.encode())
+                            passwdsha256 = hashlib.sha256(password.encode())
                             db.cursor.execute("Insert into CLIENT (login, password, is_time_password, gmt, chat_id) " + \
                                               "values(%(login)s , %(passwd)s, True, %(gmt)s, %(chat_id)s);",
-                                              {'login': login, 'passwd': passwdsha512.hexdigest(), 'gmt': gmt, 'chat_id': chat_id})
+                                              {'login': login, 'passwd': passwdsha256.hexdigest(), 'gmt': gmt, 'chat_id': chat_id})
                             tg_bot.send_message(chat_id=chat_id, message="Your login: " + login + "\n" +
                                                              "Your time password: " + password + "\n" +
                                                              "You can login and change your password " +
@@ -68,8 +68,52 @@ class FlaskApp:
 
             return ('', 204)
 
-        @app.route('/', methods=['GET'])
+
+        def AlreadyLogin(session):
+            if session.get('session') is None:
+                return False
+            else:
+                db.cursor.execute('Select login from LOGIN_SESSION where session = %(session)s and is_for_change = False;', {'session': session['session']})
+                return db.cursor.rowcount > 0
+
+        @app.route('/',  methods=['GET'])
+        @app.route('/index',  methods=['GET'])
         def index():
+            
             return "Hello"
 
+        @app.route('/login', methods=['GET', 'POST'])
+        def login():
+            if request.method == 'GET':
+                if AlreadyLogin(session):
+                    return redirect(url_for("index"))
+                return render_template('login.html', incorrect_login=False)
+            else:
+                if request.form.get('login') is not None and request.form.get('password') is not None:
+                    login = request.form['login']
+                    password = request.form['password']
+                    passwdsha256 = hashlib.sha256(password.encode()).hexdigest()
+
+                    print(login)
+                    print(passwdsha256)
+
+                    db.cursor.execute('Select is_time_password from client where login = %(login)s and password = %(passwd)s',
+                                      {'login': login, 'passwd': passwdsha256})
+                    
+                    if db.cursor.rowcount != 1:
+                        return render_template('login.html', incorrect_login=True)
+                    
+                    answer = db.cursor.fetchone()[0]
+                    
+                    new_session = ''.join(secrets.choice(string.ascii_lowercase + string.ascii_uppercase + string.digits) for i in range(50))
+
+                    db.cursor.execute('Insert into login_session(login, session, is_for_change, set_dt) values(%(login)s, %(session)s, %(is_for_change)s, default)',
+                                      {'login': login, 'session': new_session, 'is_for_change': answer})
+                    
+                    session['session'] = new_session
+
+                    return ('', 204)
+
+                return ('', 204)
+        app.secret_key = SECRET_KEY
         app.run(host="0.0.0.0",port=int(PORT),ssl_context=(SSL_CERT, SSL_KEY)) 
