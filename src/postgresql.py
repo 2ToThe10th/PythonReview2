@@ -11,9 +11,10 @@ class Postgresql:
 
         cursor.execute('Create table if not exists CLIENT ( \
                         LOGIN varchar(100) primary key, \
-                        PASSWORD varchar(64) not null, \
+                        PASSWORD varchar(128) not null, \
                         IS_TIME_PASSWORD boolean not null, \
-                        GMT integer check (GMT >= -12 and GMT <= 14) \
+                        GMT integer check (GMT >= -12 and GMT <= 14), \
+                        CHAT_ID varchar(15) not null \
                         );')
 
         cursor.execute('Create table if not exists ALARMCLOCK ( \

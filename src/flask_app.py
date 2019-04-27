@@ -1,6 +1,8 @@
 from flask import *
 from threading import Thread
 import hashlib
+import secrets
+import string
 
 class FlaskApp:
     def __init__(self, TOKEN, HOST, PORT, SSL_CERT, SSL_KEY, db, tg_bot):
@@ -8,12 +10,16 @@ class FlaskApp:
 
         @app.route('/tgbot/' + TOKEN, methods=['POST'])
         def telegram_update():
-            json_data = request.get_json()
-            print(json_data)
             
-            text = str(json_data['message']['text'])
-            chat_id = str(json_data['message']['from']['id'])
-
+            json_data = request.get_json()
+                
+            try:
+                text = str(json_data['message']['text'])
+                chat_id = str(json_data['message']['from']['id'])
+            except:
+                print(json_data)
+                return ('', 204)
+            
             if text == '/start':
                 tg_bot.send_message(chat_id=chat_id, message="Hello. If you want to sign up write /reg and then " +
                                                              "your login and your timezone. For example:\n/reg Aleksandr Creator +3")
@@ -42,11 +48,20 @@ class FlaskApp:
                         return ('', 204)
                                        
                     db.cursor.execute("Select * from CLIENT where login = %s", (login,))
+                    
                     if db.cursor.rowcount:
                         tg_bot.send_message(chat_id=chat_id, message="Login is already used. Please, choose other")
                     else:
-                        password = "nothing"
-                        tg_bot.send_message(chat_id=chat_id, message="Your login: " + login + "\n" +
+                        db.cursor.execute("Select * from CLIENT where chat_id = %s", (chat_id,))
+                        if db.cursor.rowcount:
+                            tg_bot.send_message(chat_id=chat_id, message="You are already sign up from this telegram account. Please, choose other or use your already registered account")
+                        else:
+                            password = ''.join(secrets.choice(string.ascii_lowercase + string.ascii_uppercase + string.digits) for i in range(10))
+                            passwdsha512 = hashlib.sha512(password.encode())
+                            db.cursor.execute("Insert into CLIENT (login, password, is_time_password, gmt, chat_id) " + \
+                                              "values(%(login)s , %(passwd)s, True, %(gmt)s, %(chat_id)s);",
+                                              {'login': login, 'passwd': passwdsha512.hexdigest(), 'gmt': gmt, 'chat_id': chat_id})
+                            tg_bot.send_message(chat_id=chat_id, message="Your login: " + login + "\n" +
                                                              "Your time password: " + password + "\n" +
                                                              "You can login and change your password " +
                                                              "on https://" + str(HOST) + ":" + str(PORT))
