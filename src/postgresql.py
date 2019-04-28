@@ -27,7 +27,6 @@ class Postgresql:
         cursor.execute('Create table if not exists LOGIN_SESSION ( \
                         LOGIN varchar(100) references CLIENT (LOGIN), \
                         SESSION varchar(50) primary key, \
-                        IS_FOR_CHANGE boolean not null, \
                         SET_DT date default now()::date not null \
                         );')
 

@@ -5,7 +5,7 @@ MAX_TIME_TO_REPEAT = 100
 
 class Telegram:
 
-    def __init__(self, SSL_CERT, TOKEN, HOST, PORT):
+    def __init__(self, SSL_CERT, TOKEN, TELEGRAM_PATH, HOST, PORT):
 
         if PORT not in [80, 88, 443, 8443]:
             ValueError("Incorrect port, might be in [80, 88, 443, 8443]")
@@ -13,7 +13,7 @@ class Telegram:
         for i in range(MAX_TIME_TO_REPEAT):
             self.__URL = "https://api.telegram.org/bot" + TOKEN + "/"
             answer = requests.post(self.__URL + "setWebhook",
-                                   data={'url': "https://" + str(HOST) + ":" + str(PORT) + "/tgbot/" + TOKEN},
+                                   data={'url': "https://" + str(HOST) + ":" + str(PORT) + "/tgbot/" + TELEGRAM_PATH},
                                    files={'certificate': open(SSL_CERT, 'rb')})
             if answer.ok:
                 break

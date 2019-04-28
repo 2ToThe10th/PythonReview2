@@ -5,10 +5,10 @@ import secrets
 import string
 
 class FlaskApp:
-    def __init__(self, TOKEN, HOST, PORT, SSL_CERT, SSL_KEY, SECRET_KEY, db, tg_bot):
+    def __init__(self, TOKEN, TELEGRAM_PATH, HOST, PORT, SSL_CERT, SSL_KEY, SECRET_KEY, db, tg_bot):
         app = Flask(__name__)
 
-        @app.route('/tgbot/' + TOKEN, methods=['POST'])
+        @app.route('/tgbot/' + TELEGRAM_PATH, methods=['POST'])
         def telegram_update():
             
             json_data = request.get_json()
@@ -71,49 +71,147 @@ class FlaskApp:
 
         def AlreadyLogin(session):
             if session.get('session') is None:
-                return False
+                return None
             else:
-                db.cursor.execute('Select login from LOGIN_SESSION where session = %(session)s and is_for_change = False;', {'session': session['session']})
-                return db.cursor.rowcount > 0
+                db.cursor.execute('Select a.login from LOGIN_SESSION a inner join CLIENT b on a.login = b.login where session = %(session)s and is_time_password = False;', 
+                                  {'session': session['session']})
+                if db.cursor.rowcount:
+                    return db.cursor.fetchone()[0]
+                else:
+                    return None
+
+        def redirect_if_None(session):
+            if session.get('session') is not None:
+                db.cursor.execute('Select login from LOGIN_SESSION where session = %(session)s', {'session': session['session']})
+                if db.cursor.rowcount:
+                    return redirect('change_password')
+            
+            return redirect('login')
+
 
         @app.route('/',  methods=['GET'])
         @app.route('/index',  methods=['GET'])
         def index():
-            
-            return "Hello"
+            login = AlreadyLogin(session)
+            if login is None:
+                return redirect_if_None(session)
+            else:
+                return login
+    
+        @app.route('/create_alarm', methods=['GET', 'POST'])
+        def create_alarm():
+            if request.method == 'GET':
+                login = AlreadyLogin(session)
+                if login is None:
+                    return redirect_if_None(session)
+                else:
+                    return render_template('create_alarm.html', login=login)
 
         @app.route('/login', methods=['GET', 'POST'])
         def login():
             if request.method == 'GET':
-                if AlreadyLogin(session):
-                    return redirect(url_for("index"))
-                return render_template('login.html', incorrect_login=False)
+                if AlreadyLogin(session) is not None:
+                    return redirect('index')
+                else:
+                    if session.get('session') is not None:
+                        db.cursor.execute('Select login from LOGIN_SESSION where session = %(session)s', {'session': session['session']})
+                        if db.cursor.rowcount:
+                            return redirect('change_password')
+                    
+                    return render_template('login.html', incorrect_login=False)
             else:
                 if request.form.get('login') is not None and request.form.get('password') is not None:
                     login = request.form['login']
                     password = request.form['password']
                     passwdsha256 = hashlib.sha256(password.encode()).hexdigest()
 
-                    print(login)
-                    print(passwdsha256)
-
-                    db.cursor.execute('Select is_time_password from client where login = %(login)s and password = %(passwd)s',
+                    db.cursor.execute('Select login from client where login = %(login)s and password = %(passwd)s',
                                       {'login': login, 'passwd': passwdsha256})
                     
                     if db.cursor.rowcount != 1:
-                        return render_template('login.html', incorrect_login=True)
-                    
-                    answer = db.cursor.fetchone()[0]
-                    
-                    new_session = ''.join(secrets.choice(string.ascii_lowercase + string.ascii_uppercase + string.digits) for i in range(50))
-
-                    db.cursor.execute('Insert into login_session(login, session, is_for_change, set_dt) values(%(login)s, %(session)s, %(is_for_change)s, default)',
-                                      {'login': login, 'session': new_session, 'is_for_change': answer})
+                        return render_template('login.html', incorrect_login=True) 
+                   
+                    while True:
+                        try:
+                            new_session = ''.join(secrets.choice(string.ascii_lowercase + string.ascii_uppercase + string.digits) for i in range(50))
+                            db.cursor.execute('Insert into login_session(login, session, set_dt) values(%(login)s, %(session)s, default)',
+                                              {'login': login, 'session': new_session})
+                            break
+                        except Exception:
+                            pass
                     
                     session['session'] = new_session
 
-                    return ('', 204)
+                    return redirect(url_for('index'))
+                else:
+                    return render_template('login.html', incorrect_login=True)
 
-                return ('', 204)
+        @app.route('/logout', methods=['GET'])
+        def logout():
+            db.cursor.execute('delete from LOGIN_SESSION where session = %(session)s',
+                              {'session': session['session']})
+            session['session'] = ""
+            return redirect(url_for("login"))
+
+        @app.route('/change_password', methods=['GET', 'POST'])
+        def ChangePassword():
+            if request.method == 'GET':
+                login = ""
+                if session.get('session') is not None:
+                    db.cursor.execute('Select login from LOGIN_SESSION where session = %(session)s', {'session': session['session']})
+                    if db.cursor.rowcount:
+                        login = db.cursor.fetchone()[0]
+
+                return render_template('change_password.html', login=login)
+            else:
+                if request.form.get('login') is not None and request.form.get('current_password') is not None and request.form.get('new_password') is not None and request.form.get('retype_new_password') is not None:
+                    login = request.form.get('login')
+                    current_passwd = request.form.get('current_password')
+                    new_passwd = request.form.get('new_password')
+                    retype_new_passwd = request.form.get('retype_new_password')
+                    if new_passwd != retype_new_passwd:
+                        login = ""
+                        if session.get('session') is not None:
+                            db.cursor.execute('Select login from LOGIN_SESSION where session = %(session)s', {'session': session['session']})
+                            if db.cursor.rowcount:
+                                login = db.cursor.fetchone()[0]
+                        return render_template('change_password.html', login=login, error="New password is not equal to retype new password")
+
+                    cur_passwd_sha256 = hashlib.sha256(current_passwd.encode()).hexdigest()
+                    db.cursor.execute('Select gmt, chat_id from client where login = %(login)s and password = %(passwd)s', {'login': login, 'passwd': cur_passwd_sha256})
+                    if db.cursor.rowcount:
+                        db.cursor.execute('Delete from login_session where login = %(login)s', {'login': login})
+                        new_passwd_sha256 = hashlib.sha256(new_passwd.encode()).hexdigest()
+                        db.cursor.execute('Update client set password = %(passwd)s, is_time_password = False where login = %(login)s', 
+                                   {'passwd': new_passwd_sha256, 'login': login})
+                        
+                        while True:
+                            try:
+                                new_session = ''.join(secrets.choice(string.ascii_lowercase + string.ascii_uppercase + string.digits) for i in range(50))
+                                db.cursor.execute('Insert into login_session(login, session, set_dt) values(%(login)s, %(session)s, default)',
+                                                  {'login': login, 'session': new_session})
+                                break
+                            except Exception as e:
+                                pass
+
+                        session['session'] = new_session
+
+                        return redirect(url_for('index'))
+                    else:
+                        login = ""
+                        if session.get('session') is not None:
+                            db.cursor.execute('Select login from LOGIN_SESSION where session = %(session)s', {'session': session['session']})
+                            if db.cursor.rowcount:
+                                login = db.cursor.fetchone()[0]
+
+                        return render_template('change_password.html', login=login, error="Incorrect login/current password")
+                else:
+                    login = ""
+                    if session.get('session') is not None:
+                        db.cursor.execute('Select login from LOGIN_SESSION where session = %(session)s', {'session': session['session']})
+                        if db.cursor.rowcount:
+                            login = db.cursor.fetchone()[0]
+                    return render_template('change_password.html', login=login, error = "Please, fill all fields")
+
         app.secret_key = SECRET_KEY
-        app.run(host="0.0.0.0",port=int(PORT),ssl_context=(SSL_CERT, SSL_KEY)) 
+        app.run(host="0.0.0.0", port=int(PORT), ssl_context=(SSL_CERT, SSL_KEY), debug=False) 

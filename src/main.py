@@ -1,6 +1,8 @@
 import telegram
 import flask_app
 import postgresql
+import secrets
+import string
 
 TOKEN = "749160029:AAFuIWuEjGMMLv7X66vMGch1u3ZCqP1RLtk"
 SSL_CERT = "cert.pem"
@@ -11,10 +13,11 @@ DB_NAME = "alarmclock"
 DB_USER = "alarmclock"
 PASSWORD = "alarmclockpasswd"
 SECRET_KEY = "rdghea1jbMRzBQrgYqwCop6JQz0A2VHCjnpVJSkLxX6oYWzpH4"
+TELEGRAM_PATH = ''.join(secrets.choice(string.ascii_lowercase + string.ascii_uppercase + string.digits) for i in range(50))
 
 db = postgresql.Postgresql(DB_NAME, DB_USER, PASSWORD)
-tg_bot = telegram.Telegram(SSL_CERT, TOKEN, HOST, PORT)
-flask_app = flask_app.FlaskApp(TOKEN, HOST, PORT, SSL_CERT, SSL_KEY, SECRET_KEY, db, tg_bot)
+tg_bot = telegram.Telegram(SSL_CERT, TOKEN, TELEGRAM_PATH, HOST, PORT)
+flask_app = flask_app.FlaskApp(TOKEN, TELEGRAM_PATH, HOST, PORT, SSL_CERT, SSL_KEY, SECRET_KEY, db, tg_bot)
 
 del(db)
 del(tg_bot)
