@@ -1,12 +1,12 @@
 {% block header %}
-  <h1>{% block title %}Log in{% endblock %}</h1>
-  {% if incorrect_login %}
-    <h2>Incorrect login or password</h2>
-  {% endif %}
+<h1>{% block title %}Log in{% endblock %}</h1>
+{% if incorrect_login %}
+<h2>Incorrect login or password</h2>
+{% endif %}
 {% endblock %}
 
 {% block content %}
-    <form method="post">
+    <form method="POST">
         <table>
             <tr>
                 <td>

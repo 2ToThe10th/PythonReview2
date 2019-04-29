@@ -3,6 +3,7 @@ from threading import Thread
 import hashlib
 import secrets
 import string
+from datetime import datetime, timedelta
 
 class FlaskApp:
     def __init__(self, TOKEN, TELEGRAM_PATH, HOST, PORT, SSL_CERT, SSL_KEY, SECRET_KEY, db, tg_bot):
@@ -98,14 +99,20 @@ class FlaskApp:
             else:
                 return login
     
-        @app.route('/create_alarm', methods=['GET', 'POST'])
-        def create_alarm():
+        @app.route('/create_alarm_clock', methods=['GET', 'POST'])
+        def create_alarm_clock():
             if request.method == 'GET':
                 login = AlreadyLogin(session)
                 if login is None:
                     return redirect_if_None(session)
                 else:
-                    return render_template('create_alarm.html', login=login)
+                    db.cursor.execute("Select gmt from client where login = %(login)s", {'login': login})
+                    return render_template('create_alarm_clock.html', login=login, time=(datetime.utcnow() + timedelta(hours=db.cursor.fetchone()[0])))
+            else:
+                login = AlreadyLogin(session)
+                if login is None:
+                    return redirect_if_None(session)
+                
 
         @app.route('/login', methods=['GET', 'POST'])
         def login():
