@@ -2,13 +2,9 @@
     <style>
         .td_head {
             width: 25%;
-            align: center;
-            valign: center;
         }
         .td_content {
-            width: 50%;
-            align: center;
-            valign: center;
+            width: 33%;
         }
     </style>
 </head>
@@ -21,13 +17,13 @@
     <table width="100%" align="center">
         <tr>
             <td class="td_head" align="center">
-                <a href="{{ url_for('CreateAlarmClock') }}">Add new alarm clock</a>
+                <a href="{{ url_for('CreateAlarmClock') }}"><button>Add new alarm clock</button></a>
             </td>
             <td class="td_head" align="center">
-                <a href="{{url_for('Logout') }}">Logout</a>
+                <a href="{{url_for('Logout') }}"><button>Logout</button></a>
             </td>
             <td class="td_head" align="center">
-                <a href="{{url_for('ChangePassword') }}">Change password</a>
+                <a href="{{url_for('ChangePassword') }}"><button>Change password</button></a>
             </td>
             <td class="td_head" align="center">
                 <p>{{login}}</p>
@@ -39,7 +35,7 @@
     {% block content %}
     {% if not alarm_clocks.__len__() %}
     <h2>You don't have any alarm clock</h2>
-    {% endif %}
+    {% else %}
     <h2 align="center">Your alarm clocks</h2>
     <table align="center" width="100%">
         <tr>
@@ -58,8 +54,12 @@
             <td class="td_content" align="center">
                 {{alarm_clock['text']}}
             </td>
+            <td class="td_content" align="center">
+                <a href="{{url_for('RemoveAlarmClock', id=alarm_clock['id'])}}"><button>Remove</button></a>
+            </td>
         </tr>
     {% endfor %}
+    {% endif %}
     <table>
     {% endblock %}
 </body>

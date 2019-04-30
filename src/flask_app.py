@@ -98,13 +98,13 @@ class FlaskApp:
             if login is None:
                 return RedirectIfNone(session)
             else:
-                db.cursor.execute('Select time, text, gmt from alarmclock inner join client on alarmclock.login = client.login where client.login = %(login)s order by time',
+                db.cursor.execute('Select time, text, gmt, id from alarmclock inner join client on alarmclock.login = client.login where client.login = %(login)s order by time',
                                   {'login': login})
                 
                 alarm_clocks = []
 
                 for i in db.cursor.fetchall():
-                    alarm_clocks.append({'time': (i[0] + datetime.timedelta(hours=int(i[2]))).ctime(), 'text': i[1]})
+                    alarm_clocks.append({'time': (i[0] + datetime.timedelta(hours=int(i[2]))).ctime(), 'text': i[1], 'id': i[3]})
 
                 return render_template('index.html', login=login, alarm_clocks=alarm_clocks)
     
@@ -153,6 +153,21 @@ class FlaskApp:
                     db.cursor.execute("Select gmt from client where login = %(login)s", {'login': login})
                     return render_template('create_alarm_clock.html', login=login, time=(datetime.datetime.utcnow() + datetime.timedelta(hours=db.cursor.fetchone()[0])), error="Please, fiil all fields") 
                 
+        @app.route('/remove_alarm_clock/<id>', methods=['GET'])
+        def RemoveAlarmClock(id):
+            login = AlreadyLogin(session)
+            if login is None:
+                return RedirectIfNone(session)
+            else:
+                print(url_for("RemoveAlarmClock", id='12'))
+
+                db.cursor.execute('Select id from alarmclock where login = %(login)s and id = %(id)s',
+                                  {'id': str(id), 'login': login})
+
+                if db.cursor.rowcount:
+                    db.cursor.execute('Delete from alarmclock where id = %(id)s', {'id': str(id)})
+
+                return redirect(url_for('Index'))
 
         @app.route('/login', methods=['GET', 'POST'])
         def Login():
