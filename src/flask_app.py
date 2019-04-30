@@ -67,6 +67,7 @@ class FlaskApp:
                                                              "You can login and change your password " +
                                                              "on https://" + str(HOST) + ":" + str(PORT))
 
+            print(json_data)
             return ('', 204)
 
 
@@ -97,7 +98,15 @@ class FlaskApp:
             if login is None:
                 return RedirectIfNone(session)
             else:
-                return render_template('index.html', login=login)
+                db.cursor.execute('Select time, text, gmt from alarmclock inner join client on alarmclock.login = client.login where client.login = %(login)s order by time',
+                                  {'login': login})
+                
+                alarm_clocks = []
+
+                for i in db.cursor.fetchall():
+                    alarm_clocks.append({'time': (i[0] + datetime.timedelta(hours=int(i[2]))).ctime(), 'text': i[1]})
+
+                return render_template('index.html', login=login, alarm_clocks=alarm_clocks)
     
         @app.route('/create_alarm_clock', methods=['GET', 'POST'])
         def CreateAlarmClock():

@@ -1,22 +1,65 @@
-{% block header %}
-<h1 align="center">{% block title %}Main Page{% endblock %}</h1>
-{% endblock %}
+<head>
+    <style>
+        .td_head {
+            width: 25%;
+            align: center;
+            valign: center;
+        }
+        .td_content {
+            width: 50%;
+            align: center;
+            valign: center;
+        }
+    </style>
+</head>
+<body>
+    {% block header %}
+    <h1 align="center">{% block title %}Main Page{% endblock %}</h1>
+    {% endblock %}
 
-{% block navigator %}
-<table width="100%" align="center">
-    <tr>
-        <td>
-            <a href="{{ url_for('CreateAlarmClock') }}">Add new alarm clock</a>
-        </td>
-        <td>
-            <a href="{{url_for('Logout') }}">Logout</a>
-        </td>
-        <td>
-            <a href="{{url_for('ChangePassword') }}">Change password</a>
-        </td>
-        <td>
-            <p>{{login}}</p>
-        </td>
-    </tr>
-</table>
-{% endblock %}
+    {% block navigator %}
+    <table width="100%" align="center">
+        <tr>
+            <td class="td_head" align="center">
+                <a href="{{ url_for('CreateAlarmClock') }}">Add new alarm clock</a>
+            </td>
+            <td class="td_head" align="center">
+                <a href="{{url_for('Logout') }}">Logout</a>
+            </td>
+            <td class="td_head" align="center">
+                <a href="{{url_for('ChangePassword') }}">Change password</a>
+            </td>
+            <td class="td_head" align="center">
+                <p>{{login}}</p>
+            </td>
+        </tr>
+    </table>
+    {% endblock %}
+
+    {% block content %}
+    {% if not alarm_clocks.__len__() %}
+    <h2>You don't have any alarm clock</h2>
+    {% endif %}
+    <h2 align="center">Your alarm clocks</h2>
+    <table align="center" width="100%">
+        <tr>
+            <td class="td_content" align="center">
+                <h3>Time</h3>
+            </td>
+            <td class="td_content" align="center">
+                <h3>Text</h3>
+            </td>
+        </tr>
+    {% for alarm_clock in alarm_clocks %}
+        <tr>
+            <td class="td_content" align="center">
+                {{alarm_clock['time']}}
+            </td>
+            <td class="td_content" align="center">
+                {{alarm_clock['text']}}
+            </td>
+        </tr>
+    {% endfor %}
+    <table>
+    {% endblock %}
+</body>
