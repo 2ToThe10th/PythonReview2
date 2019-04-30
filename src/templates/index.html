@@ -1,0 +1,22 @@
+{% block header %}
+<h1 align="center">{% block title %}Main Page{% endblock %}</h1>
+{% endblock %}
+
+{% block navigator %}
+<table width="100%" align="center">
+    <tr>
+        <td>
+            <a href="{{ url_for('CreateAlarmClock') }}">Add new alarm clock</a>
+        </td>
+        <td>
+            <a href="{{url_for('Logout') }}">Logout</a>
+        </td>
+        <td>
+            <a href="{{url_for('ChangePassword') }}">Change password</a>
+        </td>
+        <td>
+            <p>{{login}}</p>
+        </td>
+    </tr>
+</table>
+{% endblock %}

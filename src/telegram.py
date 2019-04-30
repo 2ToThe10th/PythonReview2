@@ -1,4 +1,5 @@
 import requests
+import time
 
 MAX_TIME_TO_REPEAT = 100
 
@@ -17,17 +18,20 @@ class Telegram:
                                    files={'certificate': open(SSL_CERT, 'rb')})
             if answer.ok:
                 break
+            time.sleep(1)
 
-    def send_message(self, chat_id, message):
+    def SendMessage(self, chat_id, message):
         for i in range(MAX_TIME_TO_REPEAT):
             answer = requests.post(self.__URL + "sendMessage",
                                    data={'chat_id': str(chat_id), 'text': str(message)})
             if answer.ok:
                 break
+            time.sleep(1)
 
-    def __del__(self):
+    def Close(self):
         for i in range(MAX_TIME_TO_REPEAT):
             answer = requests.post(self.__URL + "setWebhook")
 
             if answer.ok:
                 break
+            time.sleep(1)

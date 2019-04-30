@@ -30,6 +30,6 @@ class Postgresql:
                         SET_DT date default now()::date not null \
                         );')
 
-    def __del__(self):
+    def Close(self):
         self.cursor.close()
         self.db.close()

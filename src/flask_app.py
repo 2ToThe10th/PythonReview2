@@ -3,14 +3,14 @@ from threading import Thread
 import hashlib
 import secrets
 import string
-from datetime import datetime, timedelta
+import datetime
 
 class FlaskApp:
     def __init__(self, TOKEN, TELEGRAM_PATH, HOST, PORT, SSL_CERT, SSL_KEY, SECRET_KEY, db, tg_bot):
         app = Flask(__name__)
 
         @app.route('/tgbot/' + TELEGRAM_PATH, methods=['POST'])
-        def telegram_update():
+        def TelegramUpdate():
             
             json_data = request.get_json()
                 
@@ -22,7 +22,7 @@ class FlaskApp:
                 return ('', 204)
             
             if text == '/start':
-                tg_bot.send_message(chat_id=chat_id, message="Hello. If you want to sign up write /reg and then " +
+                tg_bot.SendMessage(chat_id=chat_id, message="Hello. If you want to sign up write /reg and then " +
                                                              "your login and your timezone. For example:\n/reg Aleksandr Creator +3")
             elif len(text) >= 4 and text[:4] == '/reg':
                 row_data = text[4:].split(' ')
@@ -31,13 +31,13 @@ class FlaskApp:
                     if i != '':
                         data.append(i)
                 if len(data) < 2:
-                    tg_bot.send_message(chat_id=chat_id, message="Incorrect parameters. Sign Up might be like this:" +
+                    tg_bot.SendMessage(chat_id=chat_id, message="Incorrect parameters. Sign Up might be like this:" +
                                                                  "\n/reg Pasha -5")
                 else:
                     login = str(' '.join(data[:-1]))
                     
                     if len(login) > 40:
-                        tg_bot.send_message(chat_id=chat_id, message="Login must be no more than 40 symbols")
+                        tg_bot.SendMessage(chat_id=chat_id, message="Login must be no more than 40 symbols")
                         return ('', 204)
                     
                     try:
@@ -45,24 +45,24 @@ class FlaskApp:
                         if gmt < -12 or gmt > 14:
                             raise ValueError('Incorrect gmt') 
                     except:
-                        tg_bot.send_message(chat_id=chat_id, message="timezone might be a number between -12 and 14")
+                        tg_bot.SendMessage(chat_id=chat_id, message="timezone might be a number between -12 and 14")
                         return ('', 204)
                                        
                     db.cursor.execute("Select * from CLIENT where login = %s", (login,))
                     
                     if db.cursor.rowcount:
-                        tg_bot.send_message(chat_id=chat_id, message="Login is already used. Please, choose other")
+                        tg_bot.SendMessage(chat_id=chat_id, message="Login is already used. Please, choose other")
                     else:
                         db.cursor.execute("Select * from CLIENT where chat_id = %s", (chat_id,))
                         if db.cursor.rowcount:
-                            tg_bot.send_message(chat_id=chat_id, message="You are already sign up from this telegram account. Please, choose other or use your already registered account")
+                            tg_bot.SendMessage(chat_id=chat_id, message="You are already sign up from this telegram account. Please, choose other or use your already registered account")
                         else:
                             password = ''.join(secrets.choice(string.ascii_lowercase + string.ascii_uppercase + string.digits) for i in range(10))
                             passwdsha256 = hashlib.sha256(password.encode())
                             db.cursor.execute("Insert into CLIENT (login, password, is_time_password, gmt, chat_id) " + \
                                               "values(%(login)s , %(passwd)s, True, %(gmt)s, %(chat_id)s);",
                                               {'login': login, 'passwd': passwdsha256.hexdigest(), 'gmt': gmt, 'chat_id': chat_id})
-                            tg_bot.send_message(chat_id=chat_id, message="Your login: " + login + "\n" +
+                            tg_bot.SendMessage(chat_id=chat_id, message="Your login: " + login + "\n" +
                                                              "Your time password: " + password + "\n" +
                                                              "You can login and change your password " +
                                                              "on https://" + str(HOST) + ":" + str(PORT))
@@ -81,49 +81,80 @@ class FlaskApp:
                 else:
                     return None
 
-        def redirect_if_None(session):
+        def RedirectIfNone(session):
             if session.get('session') is not None:
                 db.cursor.execute('Select login from LOGIN_SESSION where session = %(session)s', {'session': session['session']})
                 if db.cursor.rowcount:
-                    return redirect('change_password')
+                    return redirect(url_for('ChangePassword'))
             
-            return redirect('login')
+            return redirect(url_for('Login'))
 
 
         @app.route('/',  methods=['GET'])
         @app.route('/index',  methods=['GET'])
-        def index():
+        def Index():
             login = AlreadyLogin(session)
             if login is None:
-                return redirect_if_None(session)
+                return RedirectIfNone(session)
             else:
-                return login
+                return render_template('index.html', login=login)
     
         @app.route('/create_alarm_clock', methods=['GET', 'POST'])
-        def create_alarm_clock():
+        def CreateAlarmClock():
             if request.method == 'GET':
                 login = AlreadyLogin(session)
                 if login is None:
-                    return redirect_if_None(session)
+                    return RedirectIfNone(session)
                 else:
                     db.cursor.execute("Select gmt from client where login = %(login)s", {'login': login})
-                    return render_template('create_alarm_clock.html', login=login, time=(datetime.utcnow() + timedelta(hours=db.cursor.fetchone()[0])))
+                    return render_template('create_alarm_clock.html', login=login, time=(datetime.datetime.utcnow() + datetime.timedelta(hours=db.cursor.fetchone()[0])))
             else:
                 login = AlreadyLogin(session)
                 if login is None:
-                    return redirect_if_None(session)
+                    return RedirectIfNone(session)
+                if request.form.get('year') is not None and request.form.get('month') is not None and request.form.get('day') is not None and request.form.get('hour') is not None and request.form.get('minute') is not None and request.form.get('text') is not None:
+                    try:
+                        year = int(request.form['year'])
+                        month = int(request.form['month'])
+                        day = int(request.form['day'])
+                        hour = int(request.form['hour'])
+                        minute = int(request.form['minute'])
+                        text = request.form['text']
+
+                        if text == '':
+                            raise ValueError()
+
+                        time = datetime.datetime(year=year, month=month, day=day, hour=hour, minute=minute)
+                        db.cursor.execute("Select gmt from client where login = %(login)s", {'login': login})
+                        time -= datetime.timedelta(hours=db.cursor.fetchone()[0])
+                        
+                        if time <= datetime.datetime.utcnow():
+                            db.cursor.execute("Select gmt from client where login = %(login)s", {'login': login})
+                            return render_template('create_alarm_clock.html', login=login, time=(datetime.datetime.utcnow() + datetime.timedelta(hours=db.cursor.fetchone()[0])), error="Time might be in future")
+                            
+                        db.cursor.execute('Insert into ALARMCLOCK(id, login, time, text) \
+                                    values(default, %(login)s, %(time)s, %(text)s)',
+                                    {'login': login, 'time': time, 'text': text})
+
+                        return redirect(url_for('Index'))
+                    except:
+                        db.cursor.execute("Select gmt from client where login = %(login)s", {'login': login})
+                        return render_template('create_alarm_clock.html', login=login, time=(datetime.datetime.utcnow() + datetime.timedelta(hours=db.cursor.fetchone()[0])), error="Incorrect data")
+                else:
+                    db.cursor.execute("Select gmt from client where login = %(login)s", {'login': login})
+                    return render_template('create_alarm_clock.html', login=login, time=(datetime.datetime.utcnow() + datetime.timedelta(hours=db.cursor.fetchone()[0])), error="Please, fiil all fields") 
                 
 
         @app.route('/login', methods=['GET', 'POST'])
-        def login():
+        def Login():
             if request.method == 'GET':
                 if AlreadyLogin(session) is not None:
-                    return redirect('index')
+                    return redirect(url_for('Index'))
                 else:
                     if session.get('session') is not None:
                         db.cursor.execute('Select login from LOGIN_SESSION where session = %(session)s', {'session': session['session']})
                         if db.cursor.rowcount:
-                            return redirect('change_password')
+                            return redirect(url_for('ChangePassword'))
                     
                     return render_template('login.html', incorrect_login=False)
             else:
@@ -149,16 +180,17 @@ class FlaskApp:
                     
                     session['session'] = new_session
 
-                    return redirect(url_for('index'))
+                    return redirect(url_for('Index'))
                 else:
                     return render_template('login.html', incorrect_login=True)
 
         @app.route('/logout', methods=['GET'])
-        def logout():
-            db.cursor.execute('delete from LOGIN_SESSION where session = %(session)s',
+        def Logout():
+            if session.get('session') is not None:
+                db.cursor.execute('delete from LOGIN_SESSION where session = %(session)s',
                               {'session': session['session']})
             session['session'] = ""
-            return redirect(url_for("login"))
+            return redirect(url_for('Login'))
 
         @app.route('/change_password', methods=['GET', 'POST'])
         def ChangePassword():
@@ -203,7 +235,7 @@ class FlaskApp:
 
                         session['session'] = new_session
 
-                        return redirect(url_for('index'))
+                        return redirect(url_for('Index'))
                     else:
                         login = ""
                         if session.get('session') is not None:
