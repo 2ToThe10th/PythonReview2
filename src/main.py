@@ -5,6 +5,7 @@ import secrets
 import string
 import send_alarm_clock
 import time
+from config import *
 
 TELEGRAM_PATH = ''.join(secrets.choice(string.ascii_lowercase + string.ascii_uppercase + string.digits) for i in range(50))
 
