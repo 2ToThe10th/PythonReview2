@@ -1,12 +1,24 @@
 import threading
-import 
+import time
+import datetime
 
 class TrashCleaner(threading.Thread):
     def __init__(self, db):
-        Thread.__init__(self)
-        self.cursor = db.cursor
+        threading.Thread.__init__(self)
+        self.cursor = db.db.cursor()
         self.work = True
 
     def run(self):
         while self.work:
-
+            day_from = datetime.date.today() - datetime.timedelta(days=7)
+            self.cursor.execute('Delete from login_session where set_dt <= %(date)s', {'date': day_from})
+            time_to_awake = 60*60*24 - int(time.time())%(60*60*24)
+            for i in range(time_to_awake):
+                if not self.work:
+                    break
+                time.sleep(1)
+           
+    def Close(self):
+        self.work = False
+        self.cursor.close()
+        self.join() 
