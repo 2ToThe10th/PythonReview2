@@ -23,7 +23,7 @@ class Postgresql:
                         TIME timestamp not null, \
                         TEXT varchar(1000) \
                         );')
-        
+
         cursor.execute('Create table if not exists LOGIN_SESSION ( \
                         LOGIN varchar(100) references CLIENT (LOGIN), \
                         SESSION varchar(50) primary key, \

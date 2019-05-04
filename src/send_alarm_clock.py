@@ -3,13 +3,12 @@ import time
 import datetime
 
 class SendAlarmClock(threading.Thread):
-    
+
     def __init__(self, tg_bot, db):
         threading.Thread.__init__(self)
         self.SendTgMessage = tg_bot.SendMessage
         self.cursor = db.db.cursor()
         self.work = True
-        pass
 
     def run(self):
         while self.work:
@@ -21,11 +20,10 @@ class SendAlarmClock(threading.Thread):
                 send_thread.start()
 
             self.cursor.execute("Delete from alarmclock where time <= %(time)s", {'time': utc_time_now})
-            
-            x = time.time()
-            delta = 60 - int(x) % 60
-            for i in range(delta):
+
+            time_now = time.time()
+            delta = 60 - int(time_now) % 60
+            for _ in range(delta):
                 if not self.work:
                     break
                 time.sleep(1)
-            pass

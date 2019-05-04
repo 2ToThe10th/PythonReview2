@@ -13,12 +13,12 @@ class TrashCleaner(threading.Thread):
             day_from = datetime.date.today() - datetime.timedelta(days=7)
             self.cursor.execute('Delete from login_session where set_dt <= %(date)s', {'date': day_from})
             time_to_awake = 60*60*24 - int(time.time())%(60*60*24)
-            for i in range(time_to_awake):
+            for _ in range(time_to_awake):
                 if not self.work:
                     break
                 time.sleep(1)
-           
+
     def Close(self):
         self.work = False
         self.cursor.close()
-        self.join() 
+        self.join()
