@@ -220,6 +220,7 @@ class FlaskApp:
                         pass
 
                 session['session'] = new_session
+                session['session'] = new_session
 
                 return redirect(url_for('Index'))
 

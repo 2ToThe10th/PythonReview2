@@ -55,7 +55,7 @@
                 {{alarm_clock['text']}}
             </td>
             <td class="td_content" align="center">
-                <a href="{{url_for('RemoveAlarmClock', id=alarm_clock['id'])}}"><button>Remove</button></a>
+                <a href="{{url_for('RemoveAlarmClock', alarm_clock_id=alarm_clock['id'])}}"><button>Remove</button></a>
             </td>
         </tr>
     {% endfor %}
