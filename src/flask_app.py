@@ -25,9 +25,9 @@ class FlaskApp:
             elif len(text) >= 4 and text[:4] == '/reg':
                 row_data = text[4:].split(' ')
                 data = []
-                for i in row_data:
-                    if i != '':
-                        data.append(i)
+                for part in row_data:
+                    if part != '':
+                        data.append(part)
                 if len(data) < 2:
                     tg_bot.SendMessage(chat_id=chat_id, message="Incorrect parameters. Sign Up might be like this:\n/reg Pasha -5")
                 else:
@@ -35,7 +35,7 @@ class FlaskApp:
 
                     if len(login) > 40:
                         tg_bot.SendMessage(chat_id=chat_id, message="Login must be no more than 40 symbols")
-                        return ('', 204)
+                        return '', 204
 
                     try:
                         gmt = int(data[-1])
@@ -43,7 +43,7 @@ class FlaskApp:
                             raise ValueError('Incorrect gmt')
                     except Exception:
                         tg_bot.SendMessage(chat_id=chat_id, message="timezone might be a number between -12 and 14")
-                        return ('', 204)
+                        return '', 204
 
                     db.cursor.execute("Select * from CLIENT where login = %s", (login,))
 
@@ -56,19 +56,18 @@ class FlaskApp:
                                                message="You are already sign up from this telegram account. Please, choose other or use your already registered account")
                         else:
                             password = ''.join(
-                                secrets.choice(string.ascii_lowercase + string.ascii_uppercase + string.digits) for i in
+                                secrets.choice(string.ascii_lowercase + string.ascii_uppercase + string.digits) for _ in
                                 range(10))
-                            passwdsha256 = hashlib.sha256(password.encode())
+                            password_sha256 = hashlib.sha256(password.encode())
                             db.cursor.execute("Insert into CLIENT (login, password, is_time_password, gmt, chat_id) " +
-                                              "values(%(login)s , %(passwd)s, True, %(gmt)s, %(chat_id)s);",
-                                              {'login': login, 'passwd': passwdsha256.hexdigest(), 'gmt': gmt,
+                                              "values(%(login)s , %(password)s, True, %(gmt)s, %(chat_id)s);",
+                                              {'login': login, 'password': password_sha256.hexdigest(), 'gmt': gmt,
                                                'chat_id': chat_id})
                             tg_bot.SendMessage(chat_id=chat_id, message="Your login: " + login + "\n" +
                                                "Your time password: " + password + "\nYou can login and change "
                                                "your password on https://" + str(HOST) + ":" + str(PORT))
 
-            print(json_data)
-            return ('', 204)
+            return '', 204
 
         def AlreadyLogin(our_session):
             if our_session.get('session') is None:
@@ -104,9 +103,9 @@ class FlaskApp:
 
             alarm_clocks = []
 
-            for i in db.cursor.fetchall():
+            for alarm_clock in db.cursor.fetchall():
                 alarm_clocks.append(
-                    {'time': (i[0] + datetime.timedelta(hours=int(i[2]))).ctime(), 'text': i[1], 'id': i[3]})
+                    {'time': (alarm_clock[0] + datetime.timedelta(hours=int(alarm_clock[2]))).ctime(), 'text': alarm_clock[1], 'id': alarm_clock[3]})
 
             return render_template('index.html', login=login, alarm_clocks=alarm_clocks)
 
@@ -199,10 +198,10 @@ class FlaskApp:
             if request.form.get('login') is not None and request.form.get('password') is not None:
                 login = request.form['login']
                 password = request.form['password']
-                passwdsha256 = hashlib.sha256(password.encode()).hexdigest()
+                password_sha256 = hashlib.sha256(password.encode()).hexdigest()
 
-                db.cursor.execute('Select login from client where login = %(login)s and password = %(passwd)s',
-                                  {'login': login, 'passwd': passwdsha256})
+                db.cursor.execute('Select login from client where login = %(login)s and password = %(password)s',
+                                  {'login': login, 'password': password_sha256})
 
                 if db.cursor.rowcount != 1:
                     return render_template('login.html', incorrect_login=True)
@@ -210,7 +209,7 @@ class FlaskApp:
                 while True:
                     try:
                         new_session = ''.join(
-                            secrets.choice(string.ascii_lowercase + string.ascii_uppercase + string.digits) for i in
+                            secrets.choice(string.ascii_lowercase + string.ascii_uppercase + string.digits) for _ in
                             range(50))
                         db.cursor.execute(
                             'Insert into login_session(login, session, set_dt) values(%(login)s, %(session)s, default)',
@@ -252,10 +251,10 @@ class FlaskApp:
                request.form.get('retype_new_password') is not None:
 
                 login = request.form.get('login')
-                current_passwd = request.form.get('current_password')
-                new_passwd = request.form.get('new_password')
-                retype_new_passwd = request.form.get('retype_new_password')
-                if new_passwd != retype_new_passwd:
+                current_password = request.form.get('current_password')
+                new_password = request.form.get('new_password')
+                retype_new_password = request.form.get('retype_new_password')
+                if new_password != retype_new_password:
                     login = ""
                     if session.get('session') is not None:
                         db.cursor.execute('Select login from LOGIN_SESSION where session = %(session)s',
@@ -265,22 +264,22 @@ class FlaskApp:
                     return render_template('change_password.html', login=login,
                                            error="New password is not equal to retype new password")
 
-                cur_passwd_sha256 = hashlib.sha256(current_passwd.encode()).hexdigest()
+                cur_password_sha256 = hashlib.sha256(current_password.encode()).hexdigest()
                 db.cursor.execute(
-                    'Select gmt, chat_id from client where login = %(login)s and password = %(passwd)s',
-                    {'login': login, 'passwd': cur_passwd_sha256})
+                    'Select gmt, chat_id from client where login = %(login)s and password = %(password)s',
+                    {'login': login, 'password': cur_password_sha256})
                 if db.cursor.rowcount:
                     db.cursor.execute('Delete from login_session where login = %(login)s', {'login': login})
-                    new_passwd_sha256 = hashlib.sha256(new_passwd.encode()).hexdigest()
+                    new_password_sha256 = hashlib.sha256(new_password.encode()).hexdigest()
                     db.cursor.execute(
-                        'Update client set password = %(passwd)s, is_time_password = False where login = %(login)s',
-                        {'passwd': new_passwd_sha256, 'login': login})
+                        'Update client set password = %(password)s, is_time_password = False where login = %(login)s',
+                        {'password': new_password_sha256, 'login': login})
 
                     while True:
                         try:
                             new_session = ''.join(
                                 secrets.choice(string.ascii_lowercase + string.ascii_uppercase + string.digits) for
-                                i in range(50))
+                                _ in range(50))
                             db.cursor.execute(
                                 'Insert into login_session(login, session, set_dt) values(%(login)s, %(session)s, default)',
                                 {'login': login, 'session': new_session})
