@@ -66,6 +66,9 @@ class FlaskApp:
                             tg_bot.SendMessage(chat_id=chat_id, message="Your login: " + login + "\n" +
                                                "Your time password: " + password + "\nYou can login and change "
                                                "your password on https://" + str(HOST) + ":" + str(PORT))
+            else:
+                tg_bot.SendMessage(chat_id=chat_id, message="Sorry? but it is not a command. I have only 2 command:"
+                                                            " /start and /reg [name] [gmt]")
 
             return '', 204
 
