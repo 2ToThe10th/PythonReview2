@@ -1,0 +1,65 @@
+<head>
+    <style>
+        .td_head {
+            width: 25%;
+        }
+        .td_content {
+            width: 33%;
+        }
+    </style>
+</head>
+<body>
+    {% block header %}
+    <h1 align="center">{% block title %}Main Page{% endblock %}</h1>
+    {% endblock %}
+
+    {% block navigator %}
+    <table width="100%" align="center">
+        <tr>
+            <td class="td_head" align="center">
+                <a href="{{ url_for('create_alarm_clock') }}"><button>Add new alarm clock</button></a>
+            </td>
+            <td class="td_head" align="center">
+                <a href="{{url_for('logout') }}"><button>Logout</button></a>
+            </td>
+            <td class="td_head" align="center">
+                <a href="{{url_for('change_password') }}"><button>Change password</button></a>
+            </td>
+            <td class="td_head" align="center">
+                <p>{{login}}</p>
+            </td>
+        </tr>
+    </table>
+    {% endblock %}
+
+    {% block content %}
+    {% if not alarm_clocks.__len__() %}
+    <h2 align="center">You don't have any alarm clock</h2>
+    {% else %}
+    <h2 align="center">Your alarm clocks</h2>
+    <table align="center" width="100%">
+        <tr>
+            <td class="td_content" align="center">
+                <h3>Time</h3>
+            </td>
+            <td class="td_content" align="center">
+                <h3>Text</h3>
+            </td>
+        </tr>
+    {% for alarm_clock in alarm_clocks %}
+        <tr>
+            <td class="td_content" align="center">
+                {{alarm_clock['time']}}
+            </td>
+            <td class="td_content" align="center">
+                {{alarm_clock['text']}}
+            </td>
+            <td class="td_content" align="center">
+                <a href="{{url_for('remove_alarm_clock', alarm_clock_id=alarm_clock['id'])}}"><button>Remove</button></a>
+            </td>
+        </tr>
+    {% endfor %}
+    {% endif %}
+    <table>
+    {% endblock %}
+</body>

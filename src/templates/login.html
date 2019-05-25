@@ -1,0 +1,32 @@
+{% block header %}
+<h1>{% block title %}Log in{% endblock %}</h1>
+{% if incorrect_login %}
+<h2>Incorrect login or password</h2>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+    <form method="POST">
+        <table>
+            <tr>
+                <td>
+                    <label for="login">Login</label>
+                </td>
+                <td>
+                    <input name="login" id="login" required></br>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="password">Password</label>
+                </td>
+                <td>
+                    <input type="password" name="password" id="password" required>
+                </td>
+            </tr>
+        </table>
+        <input type="submit" value="Log in">
+    </form>
+    <h4>Don't have account yet?<br/>
+    Register on <a href="https://t.me/AlarmClockReviewBot">https://t.me/AlarmClockReviewBot</a></h4>
+{% endblock %}
