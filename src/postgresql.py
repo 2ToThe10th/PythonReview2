@@ -1,12 +1,13 @@
 import psycopg2
 
-class Postgresql:
-    def __init__(self, DB_NAME, DB_USER, PASSWORD):
-        self.db = psycopg2.connect(dbname=DB_NAME, user=DB_USER,
-                                   password=PASSWORD, host='localhost')
-        self.db.autocommit = True
 
-        self.cursor = self.db.cursor()
+class PostgreSQL:
+    def __init__(self, db_name, db_user, password):
+        self.data_base = psycopg2.connect(dbname=db_name, user=db_user,
+                                          password=password, host='localhost')
+        self.data_base.autocommit = True
+
+        self.cursor = self.data_base.cursor()
         cursor = self.cursor
 
         cursor.execute('Create table if not exists CLIENT ( \
@@ -30,6 +31,6 @@ class Postgresql:
                         SET_DT date default now()::date not null \
                         );')
 
-    def Close(self):
+    def close(self):
         self.cursor.close()
-        self.db.close()
+        self.data_base.close()

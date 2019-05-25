@@ -1,27 +1,57 @@
 import secrets
 import string
+import argparse
+import json
 import telegram
 import flask_app
 import postgresql
 import trash_cleaner
 import send_alarm_clock
-from config import *
+import server_config
 
-TELEGRAM_PATH = ''.join(secrets.choice(string.ascii_lowercase + string.ascii_uppercase + string.digits) for i in range(50))
 
-db = postgresql.Postgresql(DB_NAME, DB_USER, PASSWORD)
-tg_bot = telegram.Telegram(SSL_CERT, TOKEN, TELEGRAM_PATH, HOST, PORT)
-send_alarm_clock = send_alarm_clock.SendAlarmClock(tg_bot, db)
-send_alarm_clock.start()
-trash_cleaner = trash_cleaner.TrashCleaner(db)
-trash_cleaner.start()
-flask_app = flask_app.FlaskApp(TELEGRAM_PATH, HOST, PORT, SSL_CERT, SSL_KEY, SECRET_KEY, db, tg_bot)
+def read_config():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("config_file", help="config file")
+    args = vars(parser.parse_args())
 
-print("\nShutdown started. It may take a minute")
-send_alarm_clock.work = False
-trash_cleaner.Close()
-send_alarm_clock.join()
-send_alarm_clock.cursor.close()
-db.Close()
-tg_bot.Close()
-print("Done")
+    try:
+        with open(args["config_file"], "r") as config_file:
+            config_text = config_file.readlines()
+        config_json = json.loads(''.join(config_text))
+
+        config = server_config.Config(config_json)
+
+    except Exception:
+        raise ValueError("Bad config file")
+
+    return config
+
+
+def main():
+
+    config = read_config()
+
+    config.telegram_path = ''.join(secrets.choice(
+        string.ascii_lowercase + string.ascii_uppercase + string.digits) for _ in range(50))
+
+    data_base = postgresql.PostgreSQL(config.db_name, config.db_user, config.password)
+    tg_bot = telegram.Telegram(config.ssl_cert, config.token, config.telegram_path, config.host, config.port)
+    send_alarm_clocks = send_alarm_clock.SendAlarmClock(tg_bot, data_base)
+    send_alarm_clocks.start()
+    trash_from_db_cleaner = trash_cleaner.TrashCleaner(data_base)
+    trash_from_db_cleaner.start()
+    flask_app.FlaskApp(config.telegram_path, config.host, config.port, config.ssl_cert, config.ssl_key, config.secret_key, data_base, tg_bot)
+
+    print("\nShutdown started. It may take a minute")
+    send_alarm_clocks.work = False
+    trash_from_db_cleaner.close()
+    send_alarm_clocks.join()
+    send_alarm_clocks.cursor.close()
+    data_base.close()
+    tg_bot.close()
+    print("Done")
+
+
+if __name__ == "__main__":
+    main()

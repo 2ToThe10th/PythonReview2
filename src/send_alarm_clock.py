@@ -2,24 +2,28 @@ import threading
 import time
 import datetime
 
+
 class SendAlarmClock(threading.Thread):
 
     def __init__(self, tg_bot, db):
         threading.Thread.__init__(self)
-        self.SendTgMessage = tg_bot.SendMessage
+        self.send_tg_message = tg_bot.send_message
         self.cursor = db.db.cursor()
         self.work = True
 
     def run(self):
         while self.work:
             utc_time_now = datetime.datetime.utcnow()
-            self.cursor.execute("Select text, chat_id from alarmclock inner join client on alarmclock.login = client.login where time <= %(time)s", {'time': utc_time_now})
+            self.cursor.execute("Select text, chat_id "
+                                "from alarmclock inner join client on alarmclock.login = client.login "
+                                "where time <= %(time)s", {'time': utc_time_now})
 
             for text, chat_id in self.cursor:
-                send_thread = threading.Thread(target=self.SendTgMessage, args=(chat_id, text))
+                send_thread = threading.Thread(target=self.send_tg_message, args=(chat_id, text))
                 send_thread.start()
 
-            self.cursor.execute("Delete from alarmclock where time <= %(time)s", {'time': utc_time_now})
+            self.cursor.execute("Delete from alarmclock "
+                                "where time <= %(time)s", {'time': utc_time_now})
 
             time_now = time.time()
             delta = 60 - int(time_now) % 60

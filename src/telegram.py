@@ -20,7 +20,7 @@ class Telegram:
                 break
             time.sleep(1)
 
-    def SendMessage(self, chat_id, message):
+    def send_message(self, chat_id, message):
         for _ in range(MAX_TIME_TO_REPEAT):
             answer = requests.post(self.__url + "sendMessage",
                                    data={'chat_id': str(chat_id), 'text': str(message)})
@@ -28,7 +28,7 @@ class Telegram:
                 break
             time.sleep(1)
 
-    def Close(self):
+    def close(self):
         for _ in range(MAX_TIME_TO_REPEAT):
             answer = requests.post(self.__url + "setWebhook")
 

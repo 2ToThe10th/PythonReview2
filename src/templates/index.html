@@ -17,13 +17,13 @@
     <table width="100%" align="center">
         <tr>
             <td class="td_head" align="center">
-                <a href="{{ url_for('CreateAlarmClock') }}"><button>Add new alarm clock</button></a>
+                <a href="{{ url_for('create_alarm_clock') }}"><button>Add new alarm clock</button></a>
             </td>
             <td class="td_head" align="center">
-                <a href="{{url_for('Logout') }}"><button>Logout</button></a>
+                <a href="{{url_for('logout') }}"><button>Logout</button></a>
             </td>
             <td class="td_head" align="center">
-                <a href="{{url_for('ChangePassword') }}"><button>Change password</button></a>
+                <a href="{{url_for('change_password') }}"><button>Change password</button></a>
             </td>
             <td class="td_head" align="center">
                 <p>{{login}}</p>
@@ -55,7 +55,7 @@
                 {{alarm_clock['text']}}
             </td>
             <td class="td_content" align="center">
-                <a href="{{url_for('RemoveAlarmClock', alarm_clock_id=alarm_clock['id'])}}"><button>Remove</button></a>
+                <a href="{{url_for('remove_alarm_clock', alarm_clock_id=alarm_clock['id'])}}"><button>Remove</button></a>
             </td>
         </tr>
     {% endfor %}
