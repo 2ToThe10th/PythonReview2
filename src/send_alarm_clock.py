@@ -5,10 +5,10 @@ import datetime
 
 class SendAlarmClock(threading.Thread):
 
-    def __init__(self, tg_bot, db):
+    def __init__(self, tg_bot, data_base):
         threading.Thread.__init__(self)
         self.send_tg_message = tg_bot.send_message
-        self.cursor = db.db.cursor()
+        self.cursor = data_base.data_base.cursor()
         self.work = True
 
     def run(self):
