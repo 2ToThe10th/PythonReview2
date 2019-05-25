@@ -8,7 +8,8 @@ class Telegram:
 
     def __init__(self, SSL_CERT, TOKEN, TELEGRAM_PATH, HOST, PORT):
 
-        if PORT not in [80, 88, 443, 8443]:
+        possible_ports = [80, 88, 443, 8443]
+        if PORT not in possible_ports:
             ValueError("Incorrect port, might be in [80, 88, 443, 8443]")
 
         for _ in range(MAX_TIME_TO_REPEAT):

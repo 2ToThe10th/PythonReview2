@@ -10,24 +10,31 @@ class FlaskApp:
         app = Flask(__name__)
 
         def register_new_user(chat_id, text):
-            row_data = text[4:].split(' ')
+
+            length_of_command = 4
+            row_data = text[length_of_command:].split(' ')
             data = []
             for part in row_data:
                 if part != '':
                     data.append(part)
-            if len(data) < 2:
+
+            minimum_words_required = 2
+            if len(data) < minimum_words_required:
                 tg_bot.send_message(chat_id=chat_id,
                                     message="Incorrect parameters. Sign Up might be like this:\n/reg Pasha -5")
             else:
                 user_login = str(' '.join(data[:-1]))
 
-                if len(user_login) > 40:
+                max_user_login_length = 40
+                if len(user_login) > max_user_login_length:
                     tg_bot.send_message(chat_id=chat_id, message="Login must be no more than 40 symbols")
                     return
 
                 try:
                     gmt = int(data[-1])
-                    if gmt < -12 or gmt > 14:
+                    min_possible_gmt = -12
+                    max_possible_gmt = 14
+                    if gmt < min_possible_gmt or gmt > max_possible_gmt:
                         raise ValueError('Incorrect gmt')
                 except Exception:
                     tg_bot.send_message(chat_id=chat_id, message="timezone might be a number between -12 and 14")
@@ -44,9 +51,10 @@ class FlaskApp:
                                             message="You are already sign up from this telegram account. "
                                                     "Please, choose other or use your already registered account")
                     else:
+                        password_length = 10
                         password = ''.join(
                             secrets.choice(string.ascii_lowercase + string.ascii_uppercase + string.digits) for _ in
-                            range(10))
+                            range(password_length))
                         password_sha256 = hashlib.sha256(password.encode())
                         db.cursor.execute("Insert into CLIENT (login, password, is_time_password, gmt, chat_id) "
                                           "values(%(login)s , %(password)s, True, %(gmt)s, %(chat_id)s);",
@@ -68,11 +76,12 @@ class FlaskApp:
                 print(json_data)
                 return '', 204
 
+            length_of_command_reg_with_space = 4
             if text == '/start':
                 tg_bot.send_message(chat_id=chat_id,
                                     message="Hello. If you want to sign up write /reg and then your "
                                             "login and your timezone. For example:\n/reg Aleksandr Creator +3")
-            elif len(text) >= 4 and text[:4] == '/reg':
+            elif len(text) >= length_of_command_reg_with_space and text[:length_of_command_reg_with_space] == '/reg':
                 register_new_user(chat_id, text)
             else:
                 tg_bot.send_message(chat_id=chat_id, message="Sorry, but it is not a command. I have only 2 command:"
@@ -195,13 +204,13 @@ class FlaskApp:
 
         @app.route('/remove_alarm_clock/<alarm_clock_id>', methods=['GET'])
         def remove_alarm_clock(alarm_clock_id):
-            login = already_login(session)
-            if login is None:
+            user_login = already_login(session)
+            if user_login is None:
                 return redirect_if_none(session)
 
             db.cursor.execute('Select id from alarmclock '
                               'where login = %(login)s and id = %(id)s',
-                              {'id': str(alarm_clock_id), 'login': login})
+                              {'id': str(alarm_clock_id), 'login': user_login})
 
             if db.cursor.rowcount:
                 db.cursor.execute('Delete from alarmclock where id = %(id)s',
@@ -238,9 +247,10 @@ class FlaskApp:
 
                 while True:
                     try:
+                        session_length = 50
                         new_session = ''.join(
                             secrets.choice(string.ascii_lowercase + string.ascii_uppercase + string.digits) for _ in
-                            range(50))
+                            range(session_length))
                         db.cursor.execute(
                             "Insert into login_session(login, session, set_dt) "
                             "values(%(login)s, %(session)s, default)",
@@ -314,9 +324,10 @@ class FlaskApp:
 
                     while True:
                         try:
+                            session_length = 50
                             new_session = ''.join(
                                 secrets.choice(string.ascii_lowercase + string.ascii_uppercase + string.digits) for
-                                _ in range(50))
+                                _ in range(session_length))
                             db.cursor.execute(
                                 "Insert into login_session(login, session, set_dt) "
                                 "values(%(login)s, %(session)s, default)",

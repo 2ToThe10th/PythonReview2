@@ -26,7 +26,8 @@ class SendAlarmClock(threading.Thread):
                                 "where time <= %(time)s", {'time': utc_time_now})
 
             time_now = time.time()
-            delta = 60 - int(time_now) % 60
+            minute_in_hour = 60
+            delta = minute_in_hour - int(time_now) % minute_in_hour
             for _ in range(delta):
                 if not self.work:
                     break
