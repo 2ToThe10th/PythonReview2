@@ -4,9 +4,9 @@ import datetime
 
 
 class TrashCleaner(threading.Thread):
-    def __init__(self, db):
+    def __init__(self, data_base):
         threading.Thread.__init__(self)
-        self.cursor = db.db.cursor()
+        self.cursor = data_base.data_base.cursor()
         self.work = True
 
     def run(self):
