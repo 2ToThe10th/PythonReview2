@@ -1,6 +1,6 @@
 # PythonReview2
 
-It work on https://t.me/AlarmClockReviewBot
+It works on https://t.me/AlarmClockReviewBot
 
 ##### Для того чтобы поднять свой собственный сервис будильников нужно:
 
