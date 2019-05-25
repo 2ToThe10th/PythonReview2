@@ -99,9 +99,9 @@ class FlaskApp:
                                   "where session = %(session)s",
                                   {'session': our_session['session']})
                 if db.cursor.rowcount:
-                    return redirect(url_for('ChangePassword'))
+                    return redirect(url_for('change_password'))
 
-            return redirect(url_for('Login'))
+            return redirect(url_for('login'))
 
         @app.route('/', methods=['GET'])
         @app.route('/index', methods=['GET'])
@@ -176,7 +176,7 @@ class FlaskApp:
                                       "values(default, %(login)s, %(time)s, %(text)s)",
                                       {'login': user_login, 'time': time, 'text': text})
 
-                    return redirect(url_for('Index'))
+                    return redirect(url_for('index'))
                 except Exception:
                     db.cursor.execute("Select gmt from client "
                                       "where login = %(login)s",
@@ -207,20 +207,20 @@ class FlaskApp:
                 db.cursor.execute('Delete from alarmclock where id = %(id)s',
                                   {'id': str(alarm_clock_id)})
 
-            return redirect(url_for('Index'))
+            return redirect(url_for('index'))
 
         @app.route('/login', methods=['GET', 'POST'])
         def login():
             if request.method == 'GET':
                 if already_login(session) is not None:
-                    return redirect(url_for('Index'))
+                    return redirect(url_for('index'))
 
                 if session.get('session') is not None:
                     db.cursor.execute("Select login from LOGIN_SESSION "
                                       "where session = %(session)s",
                                       {'session': session['session']})
                     if db.cursor.rowcount:
-                        return redirect(url_for('ChangePassword'))
+                        return redirect(url_for('change_password'))
 
                     return render_template('login.html', incorrect_login=False)
 
@@ -252,7 +252,7 @@ class FlaskApp:
                 session['session'] = new_session
                 session['session'] = new_session
 
-                return redirect(url_for('Index'))
+                return redirect(url_for('index'))
 
             return render_template('login.html', incorrect_login=True)
 
@@ -263,7 +263,7 @@ class FlaskApp:
                                   'where session = %(session)s',
                                   {'session': session['session']})
             session['session'] = ""
-            return redirect(url_for('Login'))
+            return redirect(url_for('login'))
 
         @app.route('/change_password', methods=['GET', 'POST'])
         def change_password():
@@ -327,7 +327,7 @@ class FlaskApp:
 
                     session['session'] = new_session
 
-                    return redirect(url_for('Index'))
+                    return redirect(url_for('index'))
 
                 user_login = ""
                 if session.get('session') is not None:
